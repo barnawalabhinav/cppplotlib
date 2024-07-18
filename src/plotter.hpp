@@ -38,18 +38,16 @@ public:
         }
     }
 
-    inline void reset_plot(int size_x = 1200, int size_y = 900, int fontSize = 20)
+    inline void reset(int size_x = 1200, int size_y = 900, int fontSize = 20)
     {
+        fprintf(gnuplotPipe, "reset\n");
         fprintf(gnuplotPipe, "set terminal pngcairo enhanced font ',%d' size %d, %d\n", fontSize, size_x, size_y);
     }
 
     inline void plot()
     {
         if (gnuplotPipe)
-        {
             fprintf(gnuplotPipe, "\n");
-            fprintf(gnuplotPipe, "unset multiplot\n");
-        }
     }
 
     inline void set_multiplot(int multi_layout_x = 3, int multi_layout_y = 4, const char *title = "")
@@ -121,6 +119,17 @@ public:
             fprintf(gnuplotPipe, "set yrange [%f:%f]\n", min, max);
     }
 
+    template <typename T2>
+    void xticks(const std::vector<T2> &ticks)
+    {
+        std::string xtics_cmd = "set xtics (";
+        for (int i = 0; i < ticks.size() - 1; i++)
+            xtics_cmd += "\"" + ticks[i] + "\" " + std::to_string(i) + ", ";
+
+        xtics_cmd += "\"" + ticks.back() + "\" " + std::to_string(ticks.size() - 1) + ")\n";
+        fprintf(gnuplotPipe, "%s", xtics_cmd.c_str());
+    }
+
     template <typename T1, typename T2>
     void xticks(const std::vector<T1> &x, const std::vector<T2> &ticks)
     {
@@ -133,6 +142,17 @@ public:
 
         xtics_cmd += "\"" + ticks.back() + "\" " + std::to_string(x.back()) + ")\n";
         fprintf(gnuplotPipe, "%s", xtics_cmd.c_str());
+    }
+
+    template <typename T2>
+    void yticks(const std::vector<T2> &ticks)
+    {
+        std::string ytics_cmd = "set ytics (";
+        for (int i = 0; i < ticks.size() - 1; i++)
+            ytics_cmd += "\"" + ticks[i] + "\" " + std::to_string(i) + ", ";
+
+        ytics_cmd += "\"" + ticks.back() + "\" " + std::to_string(ticks.size() - 1) + ")\n";
+        fprintf(gnuplotPipe, "%s", ytics_cmd.c_str());
     }
 
     template <typename T1, typename T2>
@@ -154,19 +174,19 @@ public:
         fprintf(gnuplotPipe, "set style data boxplot\n");
         fprintf(gnuplotPipe, "set style boxplot outliers pointtype 7\n");
 
-        std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-
         if (color != "auto")
             for (int i = 0; i < y.size(); i++)
                 fprintf(gnuplotPipe, "set linetype %d lc '%s' lw 2\n", i + 1, color);
 
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        std::ofstream fout(filename);
         for (int j = 0; j < y[0].size() - 1; j++)
         {
             for (int i = 0; i < y.size() - 1; i++)
                 fout << y[i][j] << " ";
             fout << y.back()[j] << "\n";
         }
+        fout.close();
 
         fprintf(gnuplotPipe, "plot '%s' using (1):1 title '' with boxplot,", filename.c_str());
         for (int i = 1; i < y.size(); i++)
@@ -178,76 +198,112 @@ public:
     }
 
     template <typename T1, typename T2>
-    inline void createPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char* pointtype = "7", const double pointsize = 1.0, const char* line_title = "")
+    inline void createScatterPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *pointtype = "O", const double pointsize = 1.0, const char *title = "", const char *point_color = "auto", const bool set_range = true)
     {
-        fprintf(gnuplotPipe, "plot ");
         std::string filename = std::to_string(cnt_files) + ".dat";
         std::ofstream fout(filename);
-
         for (int i = 0; i < x.size(); i++)
         {
             if (i >= y.size())
                 break;
             fout << x[i] << " " << y[i] << "\n";
         }
-        if (point_color == "auto")
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 with points title ''", filename.c_str(), style);
-        else
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype %s pointsize %f title ''", filename.c_str(), style, point_color);
+        fout.close();
 
-        cnt_files++;
-    }
-
-    template <typename T>
-    inline void createHistogram(const std::vector<T> &data, int bins = 10, const char *color = "auto")
-    {
-        std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-
-        for (const auto &val : data)
-            fout << val << "\n";
-
-        fprintf(gnuplotPipe, "bin_width = (GPVAL_DATA_Y_MAX - GPVAL_DATA_Y_MIN) / %d\n", bins);
-        fprintf(gnuplotPipe, "bin(x, width) = width * floor(x / width) + width / 2.0\n");
-        if (color == "auto")
-            fprintf(gnuplotPipe, "plot \"%s\" using (bin($1, bin_width)):(1.0) smooth freq with boxes title ''\n", filename.c_str());
-        else
-            fprintf(gnuplotPipe, "plot \"%s\" using (bin($1, bin_width)):(1.0) smooth freq with boxes linecolor '%s' title ''\n", filename.c_str(), color);
-
-        cnt_files++;
-    }
-
-    template <typename T1, typename T2>
-    inline void createPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *linecolor = "auto", const T1 shift = static_cast<T1>(0))
-    {
-        fprintf(gnuplotPipe, "plot ");
-        std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-
-        for (int i = 0; i < x.size(); i++)
+        if (set_range)
         {
-            if (i >= y.size())
-                break;
-            fout << x[i] + shift << " " << y[i] << "\n";
+            fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
+            fprintf(gnuplotPipe, "x_offset = (STATS_max_x - STATS_min_x) * 0.05\n");
+            fprintf(gnuplotPipe, "y_offset = (STATS_max_y - STATS_min_y) * 0.05\n");
+            fprintf(gnuplotPipe, "set xrange [STATS_min_x - x_offset:STATS_max_x + x_offset]\n");
+            fprintf(gnuplotPipe, "set yrange [STATS_min_y - y_offset:STATS_max_y + y_offset]\n");
         }
-        if (linecolor == "auto")
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
+
+        fprintf(gnuplotPipe, "plot ");
+        if (point_color == "auto")
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype '%s' pointsize %f title '%s'", filename.c_str(), pointtype, pointsize, title);
         else
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines linecolor '%s' title '%s'", filename.c_str(), linecolor, line_title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype '%s' pointsize %f linecolor '%s' title '%s'", filename.c_str(), pointtype, pointsize, point_color, title);
 
         cnt_files++;
     }
 
     template <typename T2>
-    inline void createPlot(const std::vector<T2> &y, const char *line_title = "", const char *linecolor = "auto")
+    inline void createHistogram(const std::vector<T2> &y, const double bin_width = 0.0, const char *color = "auto", const char *title = "", const double opacity = 1.0)
     {
-        fprintf(gnuplotPipe, "plot ");
+        fprintf(gnuplotPipe, "set style data histograms\n");
+
         std::string filename = std::to_string(cnt_files) + ".dat";
         std::ofstream fout(filename);
-
         for (int i = 0; i < y.size(); i++)
             fout << i << " " << y[i] << "\n";
+        fout.close();
 
+        // Determine the range of the data
+        fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
+        fprintf(gnuplotPipe, "y_offset = (STATS_max_y - STATS_min_y) * 0.05\n");
+        fprintf(gnuplotPipe, "set yrange [STATS_min_y - y_offset:STATS_max_y + y_offset]\n");
+
+        fprintf(gnuplotPipe, "set boxwidth %f relative\n", bin_width);
+        fprintf(gnuplotPipe, "set style fill solid %f\n", opacity);
+
+        if (std::string(color) == "auto")
+            fprintf(gnuplotPipe, "plot '%s' using 2 title '%s'\n", filename.c_str(), title);
+        else
+            fprintf(gnuplotPipe, "plot '%s' using 2 linecolor '%s' title '%s'\n", filename.c_str(), color, title);
+
+        cnt_files++;
+    }
+
+    template <typename T1, typename T2>
+    inline void createHistogram(const std::vector<T1> &x, const std::vector<T2> &y, const double bin_width = 0.0, const char *color = "auto", const char *title = "", const double opacity = 1.0)
+    {
+        fprintf(gnuplotPipe, "set style data histograms\n");
+
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        std::ofstream fout(filename);
+        for (int i = 0; i < y.size(); i++)
+        {
+            if (i >= x.size())
+                break;
+            fout << x[i] << " " << y[i] << "\n";
+        }
+        fout.close();
+
+        // Determine the range of the data
+        fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
+        fprintf(gnuplotPipe, "y_offset = (STATS_max_y - STATS_min_y) * 0.05\n");
+        fprintf(gnuplotPipe, "set yrange [STATS_min_y - y_offset:STATS_max_y + y_offset]\n");
+
+        fprintf(gnuplotPipe, "set boxwidth %f relative\n", bin_width);
+        fprintf(gnuplotPipe, "set style fill solid %f\n", opacity);
+
+        if (std::string(color) == "auto")
+            fprintf(gnuplotPipe, "plot '%s' using 2:xtic(1) title '%s'\n", filename.c_str(), title);
+        else
+            fprintf(gnuplotPipe, "plot '%s' using 2:xtic(1) linecolor '%s' title '%s'\n", filename.c_str(), color, title);
+
+        cnt_files++;
+    }
+
+    template <typename T2>
+    inline void createPlot(const std::vector<T2> &y, const char *line_title = "", const char *linecolor = "auto", const bool set_range = true)
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        std::ofstream fout(filename);
+        for (int i = 0; i < y.size(); i++)
+            fout << i << " " << y[i] << "\n";
+        fout.close();
+
+        if (set_range)
+        {
+            fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
+            fprintf(gnuplotPipe, "x_offset = (STATS_max_x - STATS_min_x) * 0.05\n");
+            fprintf(gnuplotPipe, "y_offset = (STATS_max_y - STATS_min_y) * 0.05\n");
+            fprintf(gnuplotPipe, "set xrange [STATS_min_x - x_offset:STATS_max_x + x_offset]\n");
+            fprintf(gnuplotPipe, "set yrange [STATS_min_y - y_offset:STATS_max_y + y_offset]\n");
+        }
+        fprintf(gnuplotPipe, "plot ");
         if (linecolor == "auto")
             fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
         else
@@ -257,21 +313,31 @@ public:
     }
 
     template <typename T1, typename T2>
-    inline void addPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title, const char *linecolor = "auto", const T1 shift = static_cast<T1>(0))
+    inline void createPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *linecolor = "auto", const T1 shift = static_cast<T1>(0), const bool set_range = true)
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
         std::ofstream fout(filename);
-
         for (int i = 0; i < x.size(); i++)
         {
             if (i >= y.size())
                 break;
             fout << x[i] + shift << " " << y[i] << "\n";
         }
+        fout.close();
+
+        if (set_range)
+        {
+            fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
+            fprintf(gnuplotPipe, "x_offset = (STATS_max_x - STATS_min_x) * 0.05\n");
+            fprintf(gnuplotPipe, "y_offset = (STATS_max_y - STATS_min_y) * 0.05\n");
+            fprintf(gnuplotPipe, "set xrange [STATS_min_x - x_offset:STATS_max_x + x_offset]\n");
+            fprintf(gnuplotPipe, "set yrange [STATS_min_y - y_offset:STATS_max_y + y_offset]\n");
+        }
+        fprintf(gnuplotPipe, "plot ");
         if (linecolor == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
         else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines linecolor '%s' title '%s'", filename.c_str(), linecolor, line_title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines linecolor '%s' title '%s'", filename.c_str(), linecolor, line_title);
 
         cnt_files++;
     }
@@ -281,9 +347,30 @@ public:
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
         std::ofstream fout(filename);
-
         for (int i = 0; i < y.size(); i++)
             fout << i << " " << y[i] << "\n";
+        fout.close();
+
+        if (linecolor == "auto")
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
+        else
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines linecolor '%s' title '%s'", filename.c_str(), linecolor, line_title);
+
+        cnt_files++;
+    }
+
+    template <typename T1, typename T2>
+    inline void addPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title, const char *linecolor = "auto", const T1 shift = static_cast<T1>(0))
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        std::ofstream fout(filename);
+        for (int i = 0; i < x.size(); i++)
+        {
+            if (i >= y.size())
+                break;
+            fout << x[i] + shift << " " << y[i] << "\n";
+        }
+        fout.close();
 
         if (linecolor == "auto")
             fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
