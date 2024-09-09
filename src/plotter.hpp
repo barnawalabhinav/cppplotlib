@@ -314,7 +314,7 @@ public:
     inline void set_legend(const char *position = "right")
     {
         if (gnuplotPipe)
-            fprintf(gnuplotPipe, "set key %s\n", position);
+            fprintf(gnuplotPipe, "set key box %s\n", position);
     }
 
     /**
