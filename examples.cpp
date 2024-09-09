@@ -10,6 +10,8 @@ int main()
 
     Plotter plt(1200, 900, 20, false);
     plt.set_savePath("plot.png");
+    plt.set_logscale_y();
+    plt.unset_logscale_y();
     plt.set_xlim(0 - 0.1, 4 + 0.1);
     plt.set_ylim(0 - 0.1, 6 + 0.2);
     plt.xticks(xt);
