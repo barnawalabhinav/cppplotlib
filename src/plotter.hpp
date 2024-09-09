@@ -690,7 +690,7 @@ public:
      * @overload
      */
     template <typename T1, typename T2>
-    inline void createPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const char *marker = "", const double line_width = 1.0, const LineStyle line_style = SOLID, const T1 shift = static_cast<T1>(0), const bool set_range = false)
+    inline void createPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const MarkerStyle marker = None, const double point_size = 1.0, const double line_width = 1.0, const LineStyle line_style = SOLID, const T1 shift = static_cast<T1>(0), const bool set_range = false)
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
         _write_data(filename, x, y, shift);
@@ -706,9 +706,9 @@ public:
 
         fprintf(gnuplotPipe, "plot ");
         if (line_color == "auto")
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f title '%s'", filename.c_str(), marker, line_style, line_width, line_title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
         else
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, line_style, line_width, line_color, line_title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
 
         cnt_files++;
     }
@@ -724,15 +724,15 @@ public:
      * @overload
      */
     template <typename T2>
-    inline void addPlot(const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const char *marker = "", const double line_width = 1.0, const LineStyle line_style = SOLID)
+    inline void addPlot(const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const MarkerStyle marker = None, const double point_size = 1.0, const double line_width = 1.0, const LineStyle line_style = SOLID)
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
         _write_data(filename, y);
 
         if (line_color == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f title '%s'", filename.c_str(), marker, line_style, line_width, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
         else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, line_style, line_width, line_color, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
 
         cnt_files++;
     }
@@ -751,15 +751,15 @@ public:
      * @overload
      */
     template <typename T1, typename T2>
-    inline void addPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const char *marker = "", const double line_width = 1.0, const LineStyle line_style = SOLID, const T1 shift = static_cast<T1>(0))
+    inline void addPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const MarkerStyle marker = None, const double point_size = 1.0, const double line_width = 1.0, const LineStyle line_style = SOLID, const T1 shift = static_cast<T1>(0))
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
         _write_data(filename, x, y, shift);
 
         if (line_color == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f title '%s'", filename.c_str(), marker, line_style, line_width, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
         else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, line_style, line_width, line_color, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
 
         cnt_files++;
     }
