@@ -730,9 +730,9 @@ public:
         _write_data(filename, y);
 
         if (line_color == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
         else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
 
         cnt_files++;
     }
@@ -757,9 +757,9 @@ public:
         _write_data(filename, x, y, shift);
 
         if (line_color == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
         else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
 
         cnt_files++;
     }
