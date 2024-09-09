@@ -52,6 +52,29 @@ private:
         fout.close();
     }
 
+    /**
+     * @brief Writes data to a file
+     * @tparam T1
+     * @tparam T2
+     * @param filename: name of the file
+     * @param x: vector of x-axis values
+     * @param y: vector of y-axis values
+     * @overload
+     */
+    template <typename T1, typename T2>
+    inline void _write_data(const std::string filename, const std::vector<T1> x, const std::vector<T2> ub, const std::vector<T2> lb)
+    {
+        std::ofstream fout(filename);
+        for (int i = 0; i < x.size(); i++)
+        {
+            if (i >= ub.size() || i >= lb.size())
+                break;
+            fout << x[i] << " " << ub[i] << " " << lb[i] << "\n";
+        }
+        fout.close();
+    }
+
+
 public:
     enum LineStyle
     {
@@ -760,6 +783,58 @@ public:
             fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
         else
             fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
+
+        cnt_files++;
+    }
+
+    /**
+     * @brief Creates a Line Plot
+     * @tparam T2: type of the y-axis values
+     * @param ub: vector of upper bound of y-axis values
+     * @param lb: vector of lower bound of y-axis values
+     * @param color: color of the line plot
+     * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 2. `line_style` is an enum; use `Plotter::SOLID`, `Plotter::DASHED`, `Plotter::DOTTED`, `Plotter::DASH_N_DOT`, `Plotter::DASH_N_DOUBLE_DOT` to set the line style
+     * @overload
+     */
+    template <typename T2>
+    inline void fillBetween(const std::vector<T2> &ub, const std::vector<T2> &lb, const char *color = "auto", const double alpha = 0.2)
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        std::vector<int> x(ub.size());
+        for (int i = 0; i < ub.size(); i++)
+            x[i] = i;
+        _write_data(filename, x, ub, lb);
+
+        if (color == "auto")
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves fill transparent solid %f", filename.c_str(), alpha);
+        else
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves linecolor '%s' fill transparent solid %d", filename.c_str(), color, alpha);
+
+        cnt_files++;
+    }
+
+    /**
+     * @brief Creates a Line Plot
+     * @tparam T2: type of the y-axis values
+     * @param x: vector of x-axis values
+     * @param ub: vector of upper bound of y-axis values
+     * @param lb: vector of lower bound of y-axis values
+     * @param color: color of the line plot
+     * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 2. `line_style` is an enum; use `Plotter::SOLID`, `Plotter::DASHED`, `Plotter::DOTTED`, `Plotter::DASH_N_DOT`, `Plotter::DASH_N_DOUBLE_DOT` to set the line style
+     * @overload
+     */
+    template <typename T1, typename T2>
+    inline void fillBetween(const std::vector<T1> &x, const std::vector<T2> &ub, const std::vector<T2> &lb, const char *color = "auto", const double alpha = 0.2)
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        _write_data(filename, x, ub, lb);
+
+        if (color == "auto")
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves fill transparent solid %f", filename.c_str(), alpha);
+        else
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves linecolor '%s' fill transparent solid %d", filename.c_str(), color, alpha);
 
         cnt_files++;
     }
