@@ -10,7 +10,135 @@
 
 class Plotter
 {
+private:
+    FILE *gnuplotPipe;
+    int cnt_files = 0;
+
+    /**
+     * @brief Writes data to a file
+     * @tparam T2
+     * @param filename: name of the file
+     * @param y: vector of y-axis values
+     * @overload
+     */
+    template <typename T2>
+    inline void _write_data(const std::string filename, const std::vector<T2> y)
+    {
+        std::ofstream fout(filename);
+        for (int i = 0; i < y.size(); i++)
+            fout << i << " " << y[i] << "\n";
+        fout.close();
+    }
+
+    /**
+     * @brief Writes data to a file
+     * @tparam T1
+     * @tparam T2
+     * @param filename: name of the file
+     * @param x: vector of x-axis values
+     * @param y: vector of y-axis values
+     * @overload
+     */
+    template <typename T1, typename T2>
+    inline void _write_data(const std::string filename, const std::vector<T1> x, const std::vector<T2> y, const T1 shift = static_cast<T1>(0))
+    {
+        std::ofstream fout(filename);
+        for (int i = 0; i < x.size(); i++)
+        {
+            if (i >= y.size())
+                break;
+            fout << x[i] + shift << " " << y[i] << "\n";
+        }
+        fout.close();
+    }
+
 public:
+    enum LineStyle
+    {
+        POINT,             // 0
+        SOLID,             // 1
+        DASHED,            // 2
+        DOTTED,            // 3
+        DASH_N_DOT,        // 4
+        DASH_N_DOUBLE_DOT, // 5
+    };
+
+    enum MarkerStyle
+    {
+        None,    // 0
+        Plus,    // 1
+        Cross,   // 2
+        Star,    // 3
+        Box,     // 4
+        BoxF,    // 5
+        Circle,  // 6
+        CircleF, // 7
+        TriU,    // 8
+        TriUF,   // 9
+        TriD,    // 10
+        TriDF,   // 11
+        Dia,     // 12
+        DiaF,    // 13
+        Pent,    // 14
+        PentF,   // 15
+        C0,      // 16
+        C1,      // 17
+        C2,      // 18
+        C3,      // 19
+        C4,      // 20
+        C5,      // 21
+        C6,      // 22
+        C7,      // 23
+        C8,      // 24
+        C9,      // 25
+        C10,     // 26
+        C11,     // 27
+        C12,     // 28
+        C13,     // 29
+        C14,     // 30
+        C15,     // 31
+        S0,      // 32
+        S1,      // 33
+        S2,      // 34
+        S3,      // 35
+        S4,      // 36
+        S5,      // 37
+        S6,      // 38
+        S7,      // 39
+        S8,      // 40
+        S9,      // 41
+        S10,     // 42
+        S11,     // 43
+        S12,     // 44
+        S13,     // 45
+        S14,     // 46
+        S15,     // 47
+        D0,      // 48
+        D1,      // 49
+        D2,      // 50
+        D3,      // 51
+        D4,      // 52
+        D5,      // 53
+        D6,      // 54
+        D7,      // 55
+        D8,      // 56
+        D9,      // 57
+        D10,     // 58
+        D11,     // 59
+        D12,     // 60
+        D13,     // 61
+        D14,     // 62
+        D15,     // 63
+        BoxE,    // 64
+        CircW,   // 65
+        TriUW,   // 66
+        DiaW,    // 67
+        PentW,   // 68
+        CircF,   // 69
+        Pls,     // 70
+        Crs,     // 71
+    };
+
     /**
      *  @brief  Constructor
      *  @param  size_x: width of the plot in pixels
@@ -58,7 +186,7 @@ public:
     inline void reset(int size_x = 1200, int size_y = 900, int fontSize = 20)
     {
         fflush(gnuplotPipe);
-        fprintf(gnuplotPipe, "reset\n");
+        fprintf(gnuplotPipe, "\nreset\n");
         fprintf(gnuplotPipe, "set terminal pngcairo enhanced font ',%d' size %d, %d\n", fontSize, size_x, size_y);
     }
 
@@ -325,13 +453,10 @@ public:
      * @overload
      */
     template <typename T2>
-    inline void createScatterPlot(const std::vector<T2> &y, const char *point_type = "O", const double point_size = 1.0, const char *title = "", const char *point_color = "auto", const bool set_range = true)
+    inline void createScatterPlot(const std::vector<T2> &y, const char *point_type = "O", const double point_size = 1.0, const char *title = "", const char *point_color = "auto", const bool set_range = false)
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-        for (int i = 0; i < y.size(); i++)
-            fout << i << " " << y[i] << "\n";
-        fout.close();
+        _write_data(filename, y);
 
         if (set_range)
         {
@@ -346,7 +471,7 @@ public:
         if (point_color == "auto")
             fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype '%s' pointsize %f title '%s'", filename.c_str(), point_type, point_size, title);
         else
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype '%s' pointsize %f line_color '%s' title '%s'", filename.c_str(), point_type, point_size, point_color, title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype '%s' pointsize %f linecolor '%s' title '%s'", filename.c_str(), point_type, point_size, point_color, title);
 
         cnt_files++;
     }
@@ -366,17 +491,10 @@ public:
      * @overload
      */
     template <typename T1, typename T2>
-    inline void createScatterPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *point_type = "O", const double point_size = 1.0, const char *title = "", const char *point_color = "auto", const bool set_range = true)
+    inline void createScatterPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *point_type = "O", const double point_size = 1.0, const char *title = "", const char *point_color = "auto", const bool set_range = false)
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-        for (int i = 0; i < x.size(); i++)
-        {
-            if (i >= y.size())
-                break;
-            fout << x[i] << " " << y[i] << "\n";
-        }
-        fout.close();
+        _write_data(filename, x, y, static_cast<T1>(0));
 
         if (set_range)
         {
@@ -391,7 +509,61 @@ public:
         if (point_color == "auto")
             fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype '%s' pointsize %f title '%s'", filename.c_str(), point_type, point_size, title);
         else
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype '%s' pointsize %f line_color '%s' title '%s'", filename.c_str(), point_type, point_size, point_color, title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 with points pointtype '%s' pointsize %f linecolor '%s' title '%s'", filename.c_str(), point_type, point_size, point_color, title);
+
+        cnt_files++;
+    }
+
+    /**
+     * @brief Adds a Scatter Plot to existing plot
+     * @tparam T2: type of the y-axis values
+     * @param y: vector of y-axis values
+     * @param point_type: type of the point (e.g., "O", "X", "s", "d", "p", "h", "1", "2", etc.)
+     * @param point_size: size of the point
+     * @param title: title of the plot
+     * @param point_color: color of the point
+     * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
+     * @note `title`, `point_type` and `point_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @overload
+     */
+    template <typename T2>
+    inline void addScatterPlot(const std::vector<T2> &y, const char *point_type = "O", const double point_size = 1.0, const char *title = "", const char *point_color = "auto")
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        _write_data(filename, y);
+
+        if (point_color == "auto")
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 with points pointtype '%s' pointsize %f title '%s'", filename.c_str(), point_type, point_size, title);
+        else
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 with points pointtype '%s' pointsize %f linecolor '%s' title '%s'", filename.c_str(), point_type, point_size, point_color, title);
+
+        cnt_files++;
+    }
+
+    /**
+     * @brief Adds a Scatter Plot to existing plot
+     * @tparam T1: type of the x-axis values
+     * @tparam T2: type of the y-axis values
+     * @param x: vector of x-axis values
+     * @param y: vector of y-axis values
+     * @param point_type: type of the point (e.g., "O", "X", "s", "d", "p", "h", "1", "2", etc.)
+     * @param point_size: size of the point
+     * @param title: title of the plot
+     * @param point_color: color of the point
+     * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
+     * @note `title`, `point_type` and `point_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @overload
+     */
+    template <typename T1, typename T2>
+    inline void addScatterPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *point_type = "O", const double point_size = 1.0, const char *title = "", const char *point_color = "auto")
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        _write_data(filename, x, y, static_cast<T1>(0));
+
+        if (point_color == "auto")
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 with points pointtype '%s' pointsize %f title '%s'", filename.c_str(), point_type, point_size, title);
+        else
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 with points pointtype '%s' pointsize %f linecolor '%s' title '%s'", filename.c_str(), point_type, point_size, point_color, title);
 
         cnt_files++;
     }
@@ -413,10 +585,7 @@ public:
         fprintf(gnuplotPipe, "set style data histograms\n");
 
         std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-        for (int i = 0; i < y.size(); i++)
-            fout << i << " " << y[i] << "\n";
-        fout.close();
+        _write_data(filename, y);
 
         // Determine the range of the data
         fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
@@ -453,14 +622,7 @@ public:
         fprintf(gnuplotPipe, "set style data histograms\n");
 
         std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-        for (int i = 0; i < y.size(); i++)
-        {
-            if (i >= x.size())
-                break;
-            fout << x[i] << " " << y[i] << "\n";
-        }
-        fout.close();
+        _write_data(filename, x, y, static_cast<T1>(0));
 
         // Determine the range of the data
         fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
@@ -484,18 +646,17 @@ public:
      * @param y: vector of y-axis values
      * @param line_title: title of the line plot
      * @param line_color: color of the line plot
+     * @param marker: point marker style
      * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
-     * @note `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 2. turn `set_range` to false when plotting multiple lines in the plot using add_plot and rather set the limits manually.
      * @overload
      */
     template <typename T2>
-    inline void createPlot(const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const bool set_range = true)
+    inline void createPlot(const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const MarkerStyle marker = None, const double point_size = 1.0, const double line_width = 1.0, const LineStyle line_style = SOLID, const bool set_range = false)
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-        for (int i = 0; i < y.size(); i++)
-            fout << i << " " << y[i] << "\n";
-        fout.close();
+        _write_data(filename, y);
 
         if (set_range)
         {
@@ -507,9 +668,71 @@ public:
         }
         fprintf(gnuplotPipe, "plot ");
         if (line_color == "auto")
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
         else
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines line_color '%s' title '%s'", filename.c_str(), line_color, line_title);
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with linespoints pointtype %d pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
+
+        cnt_files++;
+    }
+
+    /**
+     * @brief Creates a Line Plot
+     * @tparam T1: type of the x-axis values
+     * @tparam T2: type of the y-axis values
+     * @param x: vector of x-axis values
+     * @param y: vector of y-axis values
+     * @param line_title: title of the line plot
+     * @param line_color: color of the line plot
+     * @param shift: shift the x-axis values by a constant value
+     * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
+     * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 2. turn `set_range` to false when plotting multiple lines in the plot using add_plot and rather set the limits manually.
+     * @overload
+     */
+    template <typename T1, typename T2>
+    inline void createPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const char *marker = "", const double line_width = 1.0, const LineStyle line_style = SOLID, const T1 shift = static_cast<T1>(0), const bool set_range = false)
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        _write_data(filename, x, y, shift);
+
+        if (set_range)
+        {
+            fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
+            fprintf(gnuplotPipe, "x_offset = (STATS_max_x - STATS_min_x) * 0.05\n");
+            fprintf(gnuplotPipe, "y_offset = (STATS_max_y - STATS_min_y) * 0.05\n");
+            fprintf(gnuplotPipe, "set xrange [STATS_min_x - x_offset:STATS_max_x + x_offset]\n");
+            fprintf(gnuplotPipe, "set yrange [STATS_min_y - y_offset:STATS_max_y + y_offset]\n");
+        }
+
+        fprintf(gnuplotPipe, "plot ");
+        if (line_color == "auto")
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f title '%s'", filename.c_str(), marker, line_style, line_width, line_title);
+        else
+            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, line_style, line_width, line_color, line_title);
+
+        cnt_files++;
+    }
+
+    /**
+     * @brief Creates a Line Plot
+     * @tparam T2: type of the y-axis values
+     * @param y: vector of y-axis values
+     * @param line_title: title of the line plot
+     * @param line_color: color of the line plot
+     * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 2. `line_style` is an enum; use `Plotter::SOLID`, `Plotter::DASHED`, `Plotter::DOTTED`, `Plotter::DASH_N_DOT`, `Plotter::DASH_N_DOUBLE_DOT` to set the line style
+     * @overload
+     */
+    template <typename T2>
+    inline void addPlot(const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const char *marker = "", const double line_width = 1.0, const LineStyle line_style = SOLID)
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        _write_data(filename, y);
+
+        if (line_color == "auto")
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f title '%s'", filename.c_str(), marker, line_style, line_width, line_title);
+        else
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, line_style, line_width, line_color, line_title);
 
         cnt_files++;
     }
@@ -528,96 +751,16 @@ public:
      * @overload
      */
     template <typename T1, typename T2>
-    inline void createPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const T1 shift = static_cast<T1>(0), const bool set_range = true)
+    inline void addPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title = "", const char *line_color = "auto", const char *marker = "", const double line_width = 1.0, const LineStyle line_style = SOLID, const T1 shift = static_cast<T1>(0))
     {
         std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-        for (int i = 0; i < x.size(); i++)
-        {
-            if (i >= y.size())
-                break;
-            fout << x[i] + shift << " " << y[i] << "\n";
-        }
-        fout.close();
+        _write_data(filename, x, y, shift);
 
-        if (set_range)
-        {
-            fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
-            fprintf(gnuplotPipe, "x_offset = (STATS_max_x - STATS_min_x) * 0.05\n");
-            fprintf(gnuplotPipe, "y_offset = (STATS_max_y - STATS_min_y) * 0.05\n");
-            fprintf(gnuplotPipe, "set xrange [STATS_min_x - x_offset:STATS_max_x + x_offset]\n");
-            fprintf(gnuplotPipe, "set yrange [STATS_min_y - y_offset:STATS_max_y + y_offset]\n");
-        }
-        fprintf(gnuplotPipe, "plot ");
         if (line_color == "auto")
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f title '%s'", filename.c_str(), marker, line_style, line_width, line_title);
         else
-            fprintf(gnuplotPipe, "\"%s\" using 1:2 smooth unique with lines line_color '%s' title '%s'", filename.c_str(), line_color, line_title);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with linespoints pointtype '%s' dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, line_style, line_width, line_color, line_title);
 
         cnt_files++;
     }
-
-    /**
-     * @brief Creates a Line Plot
-     * @tparam T2: type of the y-axis values
-     * @param y: vector of y-axis values
-     * @param line_title: title of the line plot
-     * @param line_color: color of the line plot
-     * @note `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
-     * @overload
-     */
-    template <typename T2>
-    inline void addPlot(const std::vector<T2> &y, const char *line_title, const char *line_color = "auto")
-    {
-        std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-        for (int i = 0; i < y.size(); i++)
-            fout << i << " " << y[i] << "\n";
-        fout.close();
-
-        if (line_color == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
-        else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines line_color '%s' title '%s'", filename.c_str(), line_color, line_title);
-
-        cnt_files++;
-    }
-
-    /**
-     * @brief Creates a Line Plot
-     * @tparam T1: type of the x-axis values
-     * @tparam T2: type of the y-axis values
-     * @param x: vector of x-axis values
-     * @param y: vector of y-axis values
-     * @param line_title: title of the line plot
-     * @param line_color: color of the line plot
-     * @param shift: shift the x-axis values by a constant value
-     * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
-     * @note `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
-     * @overload
-     */
-    template <typename T1, typename T2>
-    inline void addPlot(const std::vector<T1> &x, const std::vector<T2> &y, const char *line_title, const char *line_color = "auto", const T1 shift = static_cast<T1>(0))
-    {
-        std::string filename = std::to_string(cnt_files) + ".dat";
-        std::ofstream fout(filename);
-        for (int i = 0; i < x.size(); i++)
-        {
-            if (i >= y.size())
-                break;
-            fout << x[i] + shift << " " << y[i] << "\n";
-        }
-        fout.close();
-
-        if (line_color == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines title '%s'", filename.c_str(), line_title);
-        else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2 smooth unique with lines line_color '%s' title '%s'", filename.c_str(), line_color, line_title);
-
-        cnt_files++;
-    }
-
-private:
-    FILE *gnuplotPipe;
-    int cnt_files = 0;
 };

@@ -1,0 +1,6 @@
+set terminal pngcairo enhanced font ',20' size 1200, 900
+
+set output 'plot.png'
+plot "0.dat" using 1:2 smooth unique with lines dashtype 2 linewidth 2.000000 linecolor 'red' title 'hi', "1.dat" using 1:2 smooth unique with lines dashtype 1 linewidth 1.000000 title ''
+reset
+set terminal pngcairo enhanced font ',20' size 1200, 900
