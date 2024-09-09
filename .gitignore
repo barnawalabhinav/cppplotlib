@@ -1,1 +1,4 @@
+*.o
 .vscode*
+plotter_comp.py
+execution.png

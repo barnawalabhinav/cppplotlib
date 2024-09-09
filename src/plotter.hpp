@@ -807,9 +807,9 @@ public:
         _write_data(filename, x, ub, lb);
 
         if (color == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves fill transparent solid %f", filename.c_str(), alpha);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves fill transparent solid %f title ''", filename.c_str(), alpha);
         else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves linecolor '%s' fill transparent solid %f", filename.c_str(), color, alpha);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves linecolor '%s' fill transparent solid %f title ''", filename.c_str(), color, alpha);
 
         cnt_files++;
     }
@@ -832,9 +832,9 @@ public:
         _write_data(filename, x, ub, lb);
 
         if (color == "auto")
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves fill transparent solid %f", filename.c_str(), alpha);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves fill transparent solid %f title ''", filename.c_str(), alpha);
         else
-            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves linecolor '%s' fill transparent solid %f", filename.c_str(), color, alpha);
+            fprintf(gnuplotPipe, ", \"%s\" using 1:2:3 with filledcurves linecolor '%s' fill transparent solid %f title ''", filename.c_str(), color, alpha);
 
         cnt_files++;
     }
