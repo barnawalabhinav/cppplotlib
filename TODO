@@ -1,2 +1,3 @@
-1. Add linestyle feature in line plot.
-2. Change methods to take argument in any order.
+1. Change methods to take argument in any order.
+2. Add PlotSurface Method where x values need to be separated by 2*"\n" characters while writing to file. See "https://stackoverflow.com/questions/62729982/how-to-plot-a-3d-gnuplot-splot-surface-graph-with-data-from-a-file"
+3. Add gradient coloring of plots, ex. palette

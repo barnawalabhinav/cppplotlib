@@ -37,6 +37,30 @@ int main()
     plt.addScatterPlot(xt, "s", 2.0, "3", "blue");
     plt.plot();
     
+    x = {1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5};
+    y = {1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5};
+    std::vector<double> z = {1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 1, 2, 3, 4, 5};
+
+    x = {-3, -3, -3, -2, -2, -2, -1, -1, -1, 0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3};
+    y = {1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3};
+    z = {9, 9, 9, 4, 4, 4, 1, 1, 1, 0, 0, 0, 1, 1, 1, 4, 4, 4, 9, 9, 9};
+
+    // x = {0, 0, 0, 1, 1, 1, 2, 2, 2};
+    // y = {0, 1, 2, 0, 1, 2, 0, 1, 2};
+    // z = {0, 1, 4, 1, 2, 5, 4, 5, 8};
+    
+    plt.reset();
+    plt.set_savePath("3dplot.png");
+    plt.show_grid(true);
+    // plt.set_xlim(0, 5);
+    // plt.set_ylim(0, 5);
+    // plt.set_zlim(0, 5);
+    plt.set_xlabel("X");
+    plt.set_ylabel("Y");
+    plt.set_zlabel("Z");
+    plt.createLinePlot3D(x, y, z, "1", "blue", Plotter::BoxF, 2.0, 2.0, Plotter::DASH_N_DOT);
+    // plt.plotSurface(x, y, z);
+    plt.plot();
 
     return 0;
 }

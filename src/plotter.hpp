@@ -11,6 +11,7 @@
 class Plotter
 {
 private:
+    bool debug = false;
     FILE *gnuplotPipe;
     int cnt_files = 0;
 
@@ -18,7 +19,7 @@ private:
      * @brief Writes data to a file
      * @tparam T2
      * @param filename: name of the file
-     * @param y: vector of y-axis values
+     * @param y: vector of second value
      * @overload
      */
     template <typename T2>
@@ -35,8 +36,8 @@ private:
      * @tparam T1
      * @tparam T2
      * @param filename: name of the file
-     * @param x: vector of x-axis values
-     * @param y: vector of y-axis values
+     * @param x: vector of first value
+     * @param y: vector of second value
      * @overload
      */
     template <typename T1, typename T2>
@@ -56,24 +57,46 @@ private:
      * @brief Writes data to a file
      * @tparam T1
      * @tparam T2
+     * @tparam T3
      * @param filename: name of the file
-     * @param x: vector of x-axis values
-     * @param y: vector of y-axis values
+     * @param x: vector of first value
+     * @param y: vector of second value
+     * @param z: vector of third value
      * @overload
      */
-    template <typename T1, typename T2>
-    inline void _write_data(const std::string filename, const std::vector<T1> x, const std::vector<T2> ub, const std::vector<T2> lb)
+    template <typename T1, typename T2, typename T3>
+    inline void _write_data(const std::string filename, const std::vector<T1> x, const std::vector<T2> y, const std::vector<T3> z)
     {
         std::ofstream fout(filename);
         for (int i = 0; i < x.size(); i++)
         {
-            if (i >= ub.size() || i >= lb.size())
+            if (i >= y.size() || i >= z.size())
                 break;
-            fout << x[i] << " " << ub[i] << " " << lb[i] << "\n";
+            fout << x[i] << " " << y[i] << " " << z[i] << "\n";
         }
         fout.close();
     }
 
+    // /**
+    //  * @brief Writes data to a file
+    //  * @tparam T1
+    //  * @param filename: name of the file
+    //  * @param x: vector of x-axis values
+    //  * @param y: vector of y-axis values
+    //  * @overload
+    //  */
+    // template <typename T1>
+    // inline void _write_data(const std::string filename, const std::vector<std::vector<T1>> data)
+    // {
+    //     std::ofstream fout(filename);
+    //     for (int i = 0; i < data.size(); i++)
+    //     {
+    //         if (i >= y.size() || i >= z.size())
+    //             break;
+    //         fout << x[i] << " " << y[i] << " " << z[i] << "\n";
+    //     }
+    //     fout.close();
+    // }
 
 public:
     enum LineStyle
@@ -176,6 +199,8 @@ public:
         else
             gnuplotPipe = popen("gnuplot -persistent", "w");
 
+        debug = debugMode;
+
         if (gnuplotPipe)
             fprintf(gnuplotPipe, "set terminal pngcairo enhanced font ',%d' size %d, %d\n", fontSize, size_x, size_y);
         else
@@ -192,8 +217,9 @@ public:
             fflush(gnuplotPipe);
             pclose(gnuplotPipe);
 
-            for (int i = 0; i < cnt_files; i++)
-                unlink((std::to_string(i) + ".dat").c_str());
+            if (!debug)
+                for (int i = 0; i < cnt_files; i++)
+                    unlink((std::to_string(i) + ".dat").c_str());
         }
     }
 
@@ -262,6 +288,18 @@ public:
     {
         if (gnuplotPipe)
             fprintf(gnuplotPipe, "\nset ylabel '%s'\n", label);
+    }
+
+    /**
+     * @brief Sets y-axis label
+     * @param label: label text for the y-axis
+     * @note  1. `label` is not a string, it is a char array; use string.c_str() to convert a string to char array
+     * @note  2. Only relevant for 3D plots
+     */
+    void set_zlabel(const char *label)
+    {
+        if (gnuplotPipe)
+            fprintf(gnuplotPipe, "\nset zlabel '%s'\n", label);
     }
 
     /**
@@ -347,6 +385,17 @@ public:
     }
 
     /**
+     * @brief Sets z-axis range
+     * @param min: minimum value of the z-axis
+     * @param max: maximum value of the z-axis
+     */
+    inline void set_zlim(double min, double max)
+    {
+        if (gnuplotPipe)
+            fprintf(gnuplotPipe, "set zrange [%f:%f]\n", min, max);
+    }
+
+    /**
      * @brief Makes x-axis logscale
      */
     inline void set_logscale_x()
@@ -365,6 +414,15 @@ public:
     }
 
     /**
+     * @brief Makes z-axis logscale
+     */
+    inline void set_logscale_z()
+    {
+        if (gnuplotPipe)
+            fprintf(gnuplotPipe, "set logscale z\n");
+    }
+
+    /**
      * @brief Makes x-axis linear scale
      */
     inline void unset_logscale_x()
@@ -380,6 +438,15 @@ public:
     {
         if (gnuplotPipe)
             fprintf(gnuplotPipe, "unset logscale y\n");
+    }
+
+    /**
+     * @brief Makes y-axis linear scale
+     */
+    inline void unset_logscale_z()
+    {
+        if (gnuplotPipe)
+            fprintf(gnuplotPipe, "unset logscale z\n");
     }
 
     /**
@@ -888,4 +955,83 @@ public:
 
         cnt_files++;
     }
+
+    /**
+     * @brief Plots A 3D Surface
+     * @tparam T1: type of the x-axis values
+     * @tparam T2: type of the y-axis values
+     * @tparam T3: type of the z-axis values
+     * @param x: vector of x-axis values
+     * @param y: vector of y-axis values
+     * @param z: vector of z-axis values
+     * @param line_title: title of the line plot
+     * @param line_color: color of the line plot
+     * @param marker: point marker style; See Plotter::MarkerStyle for options
+     * @param point_size: point marker size; Only relevant if marker is not Plotter::None
+     * @param line_width: Width of the plotted line
+     * @param line_style: line style; See Plotter::LineStyle for options
+     * @param set_hidden3D: if true, automatically hides the lines which are below the plot and hence invisible
+     * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 2. turn `set_range` to false when plotting multiple lines in the plot using add_plot and rather set the limits manually.
+     * @overload
+     */
+    template <typename T1, typename T2, typename T3>
+    inline void createLinePlot3D(const std::vector<T1> &x, const std::vector<T2> &y, const std::vector<T3> &z, const char *line_title = "", const char *line_color = "auto", const MarkerStyle marker = None, const double point_size = 1.0, const double line_width = 1.0, const LineStyle line_style = SOLID, const bool set_hidden3D = true)
+    {
+        std::string filename = std::to_string(cnt_files) + ".dat";
+        _write_data(filename, x, y, z);
+
+        if (set_hidden3D)
+            fprintf(gnuplotPipe, "set hidden3d\n");
+        else
+            fprintf(gnuplotPipe, "unset hidden3d\n");
+
+        fprintf(gnuplotPipe, "splot ");
+        if (line_color == "auto")
+            fprintf(gnuplotPipe, "\"%s\" using 1:2:3 with linespoints pointtype %d pointsize %f dashtype %d linewidth %f title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_title);
+        else
+            fprintf(gnuplotPipe, "\"%s\" using 1:2:3 with linespoints pointtype %d pointsize %f dashtype %d linewidth %f linecolor '%s' title '%s'", filename.c_str(), marker, point_size, line_style, line_width, line_color, line_title);
+
+        cnt_files++;
+    }
+
+    // /**
+    //  * @brief Creates a Scatter Plot
+    //  * @tparam T1: type of the x-axis values
+    //  * @tparam T2: type of the y-axis values
+    //  * @tparam T3: type of the z-axis values
+    //  * @param x: vector of x-axis values
+    //  * @param y: vector of y-axis values
+    //  * @param point_type: type of the point (e.g., "O", "X", "s", "d", "p", "h", "1", "2", etc.)
+    //  * @param point_size: size of the point
+    //  * @param title: title of the plot
+    //  * @param point_color: color of the point
+    //  * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
+    //  * @note `title`, `point_type` and `point_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+    //  * @note 2. turn `set_range` to false when plotting multiple scatters in the plot using addScatterPlot and instead set the limits manually.
+    //  * @overload
+    //  */
+    // template <typename T1>
+    // inline void plotSurface(const std::vector<std::vector<T1>> &data, const char *point_type = "O", const double point_size = 1.0, const char *title = "", const char *point_color = "auto", const bool set_range = false)
+    // {
+    //     std::string filename = std::to_string(cnt_files) + ".dat";
+    //     _write_data(filename, data);
+
+    //     if (set_range)
+    //     {
+    //         fprintf(gnuplotPipe, "stats '%s' using 1:2 nooutput\n", filename.c_str());
+    //         fprintf(gnuplotPipe, "x_offset = (STATS_max_x - STATS_min_x) * 0.05\n");
+    //         fprintf(gnuplotPipe, "y_offset = (STATS_max_y - STATS_min_y) * 0.05\n");
+    //         fprintf(gnuplotPipe, "set xrange [STATS_min_x - x_offset:STATS_max_x + x_offset]\n");
+    //         fprintf(gnuplotPipe, "set yrange [STATS_min_y - y_offset:STATS_max_y + y_offset]\n");
+    //     }
+
+    //     fprintf(gnuplotPipe, "plot ");
+    //     if (point_color == "auto")
+    //         fprintf(gnuplotPipe, "\"%s\" using 1:2:3 with points pointtype '%s' pointsize %f title '%s'", filename.c_str(), point_type, point_size, title);
+    //     else
+    //         fprintf(gnuplotPipe, "\"%s\" using 1:2:3 with points pointtype '%s' pointsize %f linecolor '%s' title '%s'", filename.c_str(), point_type, point_size, point_color, title);
+
+    //     cnt_files++;
+    // }
 };
