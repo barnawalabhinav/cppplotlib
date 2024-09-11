@@ -193,15 +193,12 @@ public:
             pclose(gnuplotPipe);
 
             for (int i = 0; i < cnt_files; i++)
-            {
                 unlink((std::to_string(i) + ".dat").c_str());
-                // std::remove((std::to_string(i) + ".dat").c_str());
-            }
         }
     }
 
     /**
-     *  @brief  Resets gnuplot settings to default
+     *  @brief  Resets gnuplot settings to default or specified configuration
      *  @param  size_x: width of the plot in pixels
      *  @param  size_y: height of the plot in pixels
      *  @param  fontSize: font size to be used in the plot
@@ -389,6 +386,7 @@ public:
      * @brief Sets x-axis ticks
      * @tparam T2: type of the ticks (string or char array)
      * @param ticks: vector of ticks
+     * @note Use this method only if the plot was created without the x values
      * @overload
      */
     template <typename T2>
@@ -408,6 +406,7 @@ public:
      * @tparam T2: type of the ticks (string or char array)
      * @param x: vector of x-axis values
      * @param ticks: vector of tick labels
+     * @note Use this method only if the plot was created with the x values
      * @overload
      */
     template <typename T1, typename T2>
@@ -509,6 +508,7 @@ public:
      * @param point_color: color of the point
      * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
      * @note `title`, `point_type` and `point_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 2. turn `set_range` to false when plotting multiple scatters in the plot using addScatterPlot and instead set the limits manually.
      * @overload
      */
     template <typename T2>
@@ -547,6 +547,7 @@ public:
      * @param point_color: color of the point
      * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
      * @note `title`, `point_type` and `point_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
+     * @note 2. turn `set_range` to false when plotting multiple scatters in the plot using addScatterPlot and instead set the limits manually.
      * @overload
      */
     template <typename T1, typename T2>
@@ -581,7 +582,6 @@ public:
      * @param point_size: size of the point
      * @param title: title of the plot
      * @param point_color: color of the point
-     * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
      * @note `title`, `point_type` and `point_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
      * @overload
      */
@@ -609,7 +609,6 @@ public:
      * @param point_size: size of the point
      * @param title: title of the plot
      * @param point_color: color of the point
-     * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
      * @note `title`, `point_type` and `point_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
      * @overload
      */
@@ -705,7 +704,10 @@ public:
      * @param y: vector of y-axis values
      * @param line_title: title of the line plot
      * @param line_color: color of the line plot
-     * @param marker: point marker style
+     * @param marker: point marker style; See Plotter::MarkerStyle for options
+     * @param point_size: point marker size; Only relevant if marker is not Plotter::None
+     * @param line_width: Width of the plotted line
+     * @param line_style: line style; See Plotter::LineStyle for options
      * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
      * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
      * @note 2. turn `set_range` to false when plotting multiple lines in the plot using add_plot and rather set the limits manually.
@@ -742,6 +744,10 @@ public:
      * @param y: vector of y-axis values
      * @param line_title: title of the line plot
      * @param line_color: color of the line plot
+     * @param marker: point marker style; See Plotter::MarkerStyle for options
+     * @param point_size: point marker size; Only relevant if marker is not Plotter::None
+     * @param line_width: Width of the plotted line
+     * @param line_style: line style; See Plotter::LineStyle for options
      * @param shift: shift the x-axis values by a constant value
      * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
      * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
@@ -778,6 +784,10 @@ public:
      * @param y: vector of y-axis values
      * @param line_title: title of the line plot
      * @param line_color: color of the line plot
+     * @param marker: point marker style; See Plotter::MarkerStyle for options
+     * @param point_size: point marker size; Only relevant if marker is not Plotter::None
+     * @param line_width: Width of the plotted line
+     * @param line_style: line style; See Plotter::LineStyle for options
      * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
      * @note 2. `line_style` is an enum; use `Plotter::SOLID`, `Plotter::DASHED`, `Plotter::DOTTED`, `Plotter::DASH_N_DOT`, `Plotter::DASH_N_DOUBLE_DOT` to set the line style
      * @overload
@@ -804,6 +814,10 @@ public:
      * @param y: vector of y-axis values
      * @param line_title: title of the line plot
      * @param line_color: color of the line plot
+     * @param marker: point marker style; See Plotter::MarkerStyle for options
+     * @param point_size: point marker size; Only relevant if marker is not Plotter::None
+     * @param line_width: Width of the plotted line
+     * @param line_style: line style; See Plotter::LineStyle for options
      * @param shift: shift the x-axis values by a constant value
      * @param set_range: if true, automatically sets the axes range of the plot overriding any previous settings
      * @note `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
@@ -824,13 +838,13 @@ public:
     }
 
     /**
-     * @brief Creates a Line Plot
+     * @brief Shades the region within specified bounds on y-axis
      * @tparam T2: type of the y-axis values
      * @param ub: vector of upper bound of y-axis values
      * @param lb: vector of lower bound of y-axis values
      * @param color: color of the line plot
-     * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
-     * @note 2. `line_style` is an enum; use `Plotter::SOLID`, `Plotter::DASHED`, `Plotter::DOTTED`, `Plotter::DASH_N_DOT`, `Plotter::DASH_N_DOUBLE_DOT` to set the line style
+     * @param alpha: opacity of the shaded reagion
+     * @note 1. `color` is not strings, it is char arrays; use string.c_str() to convert a string to char array
      * @overload
      */
     template <typename T2>
@@ -851,14 +865,14 @@ public:
     }
 
     /**
-     * @brief Creates a Line Plot
+     * @brief Shades the region within specified bounds on y-axis
+     * @tparam T1: type of the x-axis values
      * @tparam T2: type of the y-axis values
      * @param x: vector of x-axis values
      * @param ub: vector of upper bound of y-axis values
      * @param lb: vector of lower bound of y-axis values
      * @param color: color of the line plot
-     * @note 1. `line_title` and `line_color` are not strings, they are char arrays; use string.c_str() to convert a string to char array
-     * @note 2. `line_style` is an enum; use `Plotter::SOLID`, `Plotter::DASHED`, `Plotter::DOTTED`, `Plotter::DASH_N_DOT`, `Plotter::DASH_N_DOUBLE_DOT` to set the line style
+     * @note 1. `color` is not strings, it is char arrays; use string.c_str() to convert a string to char array
      * @overload
      */
     template <typename T1, typename T2>
