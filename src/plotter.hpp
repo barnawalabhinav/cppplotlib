@@ -1,3 +1,18 @@
+// ****************************
+// * Author: Abhinav Barnwal
+// * Last Update: 20/09/2024
+// * URL: https://github.com/barnawalabhinav/cppplotlib
+// * This code is a part of the project "cppplotlib" which is a simple C++ wrapper for gnuplot.
+// * The project is licensed under MIT License.
+// * Cite the project as:
+// *    @misc{cppplotlib,
+// *      author = {Abhinav Barnawal},
+// *      title = {cppplotlib: A simple C++ plotting library},
+// *      year = {2024},
+// *      url = {https://github.com/barnawalabhinav/cppplotlib}
+// *    }
+// ****************************
+
 #pragma once
 
 #include <cstdio>
